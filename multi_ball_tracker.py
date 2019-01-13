@@ -43,12 +43,14 @@ class ColorProcessor (threading.Thread):
 
 class FrameProcessor(threading.Thread):
 
-    def __init__(self, frame, frame_count, color_range):
+    def __init__(self, frame, frame_count, color_range, display=False):
         threading.Thread.__init__(self)
         self.frame = frame
         self.frame_count = frame_count
         self.color_range = color_range
         self.threads = []
+        self.balls = {}
+        self.display = display
 
     def run(self):
         # resize the frame
@@ -62,24 +64,24 @@ class FrameProcessor(threading.Thread):
             processor = ColorProcessor(hsv, self.frame, color, self.color_range[color])
             self.threads.append(processor)
             processor.start()
-
-    def join(self):
-        threading.Thread.join(self)
         display = args.get("display")
-        balls={}
         for thread in self.threads:
             (color, circle_center, moment_center, radius) = thread.join()
             if radius > 10:
-                balls[color] = (circle_center, moment_center, radius)
-                if display:
+                self.balls[color] = (circle_center, moment_center, radius)
+                if self.display:
                     (x, y) = circle_center
                     cv2.putText(self.frame, color, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                     cv2.circle(self.frame, (int(x), int(y)), int(radius),(0, 255, 255), 2)
                     cv2.circle(self.frame, moment_center, 5, (0, 0, 255), -1)
-        if display:
+        if self.display:
             cv2.putText(self.frame, str("frame: " + str(self.frame_count)), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             cv2.imshow("Frame", self.frame)
-        return balls
+
+    def get_balls(self):
+        if len(self.balls) == len(self.color_range):
+            return self.balls
+        return None
 
 def process_video(color_range, camera):
     i = 0
@@ -96,10 +98,12 @@ def process_video(color_range, camera):
             # if the 'q' key is pressed, stop the loop
             if key == ord("q"):
                 break
+            print(type(frame))
             beginning_time = timer() 
-            frame_processor = FrameProcessor(frame, i, color_range)
+            frame_processor = FrameProcessor(frame, i, color_range, 
+                    args.get("display"))
             frame_processor.start()
-            print(frame_processor.join())
+            frame_processor.join()
             ending_time = timer()
             total_time += (ending_time - beginning_time)
     except(KeyboardInterrupt):
