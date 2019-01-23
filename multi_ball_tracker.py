@@ -12,6 +12,59 @@ import cv2
 import threading
 from timeit import default_timer as timer
 
+class Ball:
+
+    def __init__(self,
+            circle_center, moment_center, radius, color, hsv):
+        self.circle_center = circle_center
+	self.moment_center = moment_center
+	self.radius = radius
+	self.color = color
+	self.hsv = hsv
+        self.x = circle_center[0]
+
+	"""
+    Get the center of the ball that is identified by the hsv values.
+    Note: This uses cv2.minEnclosingCircle(). This result can be
+    different by several pixels from the moment center. The difference
+    between these two methods is documented at https://docs.opencv.org/3.1.0/d3/dc0/group__imgproc__shape.html#ga8ce13c24081bbc7151e9326f412190f1.
+    """
+    def get_circle_center(self):
+        return self.circle_center
+	"""
+    Get the center of the ball that is identified by the hsv values.
+    Note: This uses cv2.moments(c) to calculate the center pixel of
+    the ball. This will always an integer pair.
+    The difference between these two methods is documented at https://docs.opencv.org/3.1.0/d3/dc0/group__imgproc__shape.html#ga8ce13c24081bbc7151e9326f412190f1.
+    """
+    def get_moment_center(self):
+        return self.moment_center
+
+    def get_radius(self):
+        return self.radius
+
+    def get_color(self):
+        return self.color
+
+    def get_hsv(self):
+        return self.hsv
+    def __eq__(self, other):
+            return (self.get_circle_center() == other.get_circle_center() and
+                    self.get_radius() == other.get_radius() and
+                    self.get_hsv() == other.get_hsv())
+
+    def __lt__(self, other):
+        return self.x < other.x
+
+    def __gt__(self, other):
+        return self.x > other.x
+
+    def __str__(self):
+        return str(self.color) + " : " + str(self.get_circle_center())
+
+    def __repr_(self):
+        return repr((self.color, self.get_circle_center()))
+
 class ColorProcessor (threading.Thread):
     def __init__(self, hsv, frame, color, color_bounds):
         threading.Thread.__init__(self)
@@ -22,7 +75,7 @@ class ColorProcessor (threading.Thread):
         self.circle_center = (-1, -1)
         self.moment_center = None
         self.radius_circle = 0
-        
+
     def run(self):
         mask = cv2.inRange(self.hsv, self.color_bounds['lower'], self.color_bounds['upper'])
 	mask = cv2.erode(mask, None, iterations=2)
@@ -39,8 +92,9 @@ class ColorProcessor (threading.Thread):
 
     def join(self):
         threading.Thread.join(self)
-        return (self.color, self.circle_center, self.moment_center, self.radius_circle)
-
+	ball = Ball(self.circle_center, self.moment_center, self.radius_circle,
+		self.color, self.color_bounds)
+	return ball
 class FrameProcessor(threading.Thread):
 
     def __init__(self, frame, frame_count, color_range, display=False):
@@ -55,10 +109,10 @@ class FrameProcessor(threading.Thread):
     def run(self):
         # resize the frame
         #frame = imutils.resize(frame, width=600)
-        
+
         # convert the frame to HSV
         hsv = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
-    
+
         # process the frame for every different ball
         for color in color_range:
             processor = ColorProcessor(hsv, self.frame, color, self.color_range[color])
@@ -66,20 +120,25 @@ class FrameProcessor(threading.Thread):
             processor.start()
         display = args.get("display")
         for thread in self.threads:
-            (color, circle_center, moment_center, radius) = thread.join()
-            if radius > 10:
-                self.balls[color] = (circle_center, moment_center, radius)
+            ball = thread.join()
+            if ball.get_radius() > 10:
+                self.balls[color] = ball
                 if self.display:
-                    (x, y) = circle_center
-                    cv2.putText(self.frame, color, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                    cv2.circle(self.frame, (int(x), int(y)), int(radius),(0, 255, 255), 2)
-                    cv2.circle(self.frame, moment_center, 5, (0, 0, 255), -1)
+                    (x, y) = ball.get_circle_center()
+                    cv2.putText(self.frame, ball.get_color(),
+			    (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX,
+			    1, (0, 255, 0), 2)
+                    cv2.circle(self.frame, (int(x), int(y)), int(ball.get_radius()),
+			    (0, 255, 255), 2)
+                    cv2.circle(self.frame, ball.get_moment_center(), 5,
+                            (0, 0, 255), -1)
         if self.display:
-            cv2.putText(self.frame, str("frame: " + str(self.frame_count)), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(self.frame, str("frame: " + str(self.frame_count)),
+		    (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             cv2.imshow("Frame", self.frame)
 
     def get_balls(self):
-        if len(self.balls) == len(self.color_range):
+        if len(self.balls) > 0:
             return self.balls
         return None
 
@@ -98,16 +157,22 @@ def process_video(color_range, camera):
             # if the 'q' key is pressed, stop the loop
             if key == ord("q"):
                 break
-            print(type(frame))
-            beginning_time = timer() 
-            frame_processor = FrameProcessor(frame, i, color_range, 
+            beginning_time = timer()
+            frame_processor = FrameProcessor(frame, i, color_range,
                     args.get("display"))
             frame_processor.start()
             frame_processor.join()
             ending_time = timer()
-            total_time += (ending_time - beginning_time)
+	    total_time += (ending_time - beginning_time)
+            balls = frame_processor.get_balls()
+            print(len(balls))
+            if balls != None and len(balls.values()) > 1:
+                balls = balls.values()
+                #print("unsorted balls", balls.values())
+                sorted_balls = sorted(balls, key=lambda ball: ball.x)
+                print("sorted", sorted_balls[0].x < sorted_balls[1].x)
     except(KeyboardInterrupt):
-        pass 
+        pass
     print("average frame time:", (total_time/i))
 def main (color_range, camera):
     process_video(color_range, camera)
