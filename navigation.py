@@ -1,4 +1,5 @@
 from multi_ball_tracker import FrameProcessor
+import math
 
 class Frame:
     """
@@ -9,10 +10,13 @@ class Frame:
         range-detector.py
     :param frame_count: optional interger used to describe the frame number
     """
-    def __init__(self, frame, color_range, frame_count=0):
+    def __init__(self, frame, color_range, servo_angle=0,
+		target_spacing=1, camera_ratio=0.0189634, frame_count=0):
         self.frame = frame
-        self.frame_count = frame_count
         self.color_range = color_range
+		self.target_spacing = target_spacing
+		self.camera_ratio = camera_ratio
+        self.frame_count = frame_count
         self.frameProcessor = FrameProcessor(frame, frame_count, color_range)
         self.frameProcessor.start()
 
@@ -23,29 +27,35 @@ class Frame:
     def result_available(self):
         return self.frameProcessor.isAlive()
 
-    """
-    Get the center of the ball that is identified by the color(arg1).
-    Note: This uses cv2.minEnclosingCircle(). This result can be 
-    different by several pixels from the moment center. The difference
-    between these two methods is documented at https://docs.opencv.org/3.1.0/d3/dc0/group__imgproc__shape.html#ga8ce13c24081bbc7151e9326f412190f1.
-    """
-    def get_circle_center(self, color):
-        if self.frameProcessor.get_balls() is not None:
-            return self.frameProcessor.get_balls().get(color)[1]
-        return (-1, -1)
-    """
-    Get the center of the ball that is identified by the color(arg1).
-    Note: This uses cv2.moments(c) to calculate the center pixel of
-    the ball. This will always an integer pair.
-    The difference between these two methods is documented at https://docs.opencv.org/3.1.0/d3/dc0/group__imgproc__shape.html#ga8ce13c24081bbc7151e9326f412190f1.
-    """
-    def get_moment_center(self, color):
-        if self.frameProcessor.get_balls() is not None:
-            return self.frameProcessor.get_balls().get(color)[2]
-        return (-1, -1)
+	def get_balls(self):
+		return self.frameProcessor.get_balls()
 
-    def get_circle_radius(self, color):
-        if self.frameProcessor.get_balls() is not None:
-            return self.frameProcessor.get_balls().get(color)[3]
-        return -1
-
+    """
+    Calculate the position of the robot using the center point coordinates of the balls/targets.
+    Ball1 is the origin
+	    ----------------------------
+	    |			      		   |
+	    |    A    Starting     B   |
+	    |                          |
+   	BLUE|Ball1a              Ball1b|RED
+   GREEN|Ball2a              Ball2b|GREEN
+ 	 RED|Ball3a              Ball3b|BLUE
+   	    |                          |
+ 	    |                          |
+ 	   ^|                          |
+  	   ||          Mining          |
+	   y----------------------------
+      (0,0) x->
+    """
+    def calculate_xyr(self, balls):
+        ## TODO: Calculate rotation
+		ordered_balls  = sorted(balls.values())
+        angle1 = ratio * math.sqrt(math.pow(balls[1].x - balls[2].x, 2) + math.pow(balls[1].y - balls[2].y, 2))
+        angle2 = ratio * math.sqrt(math.pow(balls[2].x - balls[3].x, 2) + math.pow(balls[2].y - balls[3].y, 2))
+        num = targetSpacing * sin(angle1+angle2)
+        den = (targetSpacing * sin(angle2) / sin(angle1)) - (targetSpacing * cos(angle1+angle2))
+        alpha = atan(num/den)
+        r = targetSpacing * sin(angle1 + alpha) / sin(angle1)
+        x = r * sin(alpha)
+        y = r * cos(alpha)
+        return(x,y,r)
