@@ -55,12 +55,12 @@ class Frame:
         num = targetSpacing * sin(angle1+angle2)
         den = (targetSpacing * sin(angle2) / sin(angle1)) - (targetSpacing * cos(angle1+angle2))
         alpha = atan(num/den)
-        r = targetSpacing * sin(angle1 + alpha) / sin(angle1)
-        x = r * sin(alpha)
-        y = r * cos(alpha)
+        l = targetSpacing * sin(angle1 + alpha) / sin(angle1)
+        x = l * sin(alpha)
+        y = l * cos(alpha)
         rotOffset = (balls[1].x - 1640) * ratio
-        rotation = servo_angle + rotOffset + alpha + 90
-        return(x,y,r)
+        rotation = self.servo_angle + rotOffset + alpha + 90
+        return(x,y,rotation)
 
 class CameraCapture:
     def __init__(self):
