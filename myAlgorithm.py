@@ -39,8 +39,8 @@ class AStarGraph(object):
 		elif (rowSame and colDif) or (colSame and rowDif):
 			return 1 		#straight horizontal/vertical
 		elif ((prev[0]!=cur[0] and prev[1]!=cur[1]) or (to[0]!=cur[0] and to[1]!=cur[1])) and (prev[0]!=to[0] and prev[1]!=to[1]):
-			return 1.5 		#soft turn
-		return 10 			#none of the above
+			return 5 		#soft turn
+		return 20 			#none of the above
  
 def AStarSearch(navPoints, behind, graph):
 	start = tuple(navPoints[0])
