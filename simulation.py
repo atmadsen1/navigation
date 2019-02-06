@@ -1,5 +1,6 @@
 import time
 import myAlgorithm as alg
+import nodeSmooth as ns
 from tkinter import *
 
 class simulation:
@@ -129,13 +130,17 @@ class simulation:
         h = int(self.height/self.spacing)
         graph = alg.AStarGraph(obstacles=self.obstacleMap,width=w,height=h)
         result, cost = alg.AStarSearch(self.navigationPoints,(0,0), graph)
+        betResult = ns.smoothPath(rawPath=result)
         print ("route", result)
         print ("cost", cost)
-        for i in range(len(result)-1):
+        for i in range(len(result)-1):  #draw algorithm path
             coord = (result[i][1]*self.spacing+self.spacing/2, result[i][0]*self.spacing+self.spacing/2,
                     result[i+1][1]*self.spacing+self.spacing/2, result[i+1][0]*self.spacing+self.spacing/2)
             self.objPath.append(self.C.create_line(coord, fill="red"))
-
+        for i in range(len(betResult)-1):   #draw smoothed path
+            coord = (betResult[i][1]*self.spacing+self.spacing/2, betResult[i][0]*self.spacing+self.spacing/2,
+                    betResult[i+1][1]*self.spacing+self.spacing/2, betResult[i+1][0]*self.spacing+self.spacing/2)
+            self.objPath.append(self.C.create_line(coord, fill="green"))
 
 
 
