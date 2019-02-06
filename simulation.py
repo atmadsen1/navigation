@@ -4,7 +4,7 @@ from tkinter import *
 
 class simulation:
     #spacing and things are in pixels.
-    def __init__ (self, width=800, height=600, spacing=50):
+    def __init__ (self, width=500, height=500, spacing=50):
         self.width            = width
         self.height           = height
         self.spacing          = spacing
