@@ -4,7 +4,7 @@ import nodeSmooth as ns
 from tkinter import *
 
 class simulation:
-    #spacing and things are in pixels.
+    #spacing and things are in pixels at the moment
     def __init__ (self, width=500, height=500, spacing=50):
         self.width            = width
         self.height           = height
@@ -145,5 +145,7 @@ class simulation:
 
 
 if __name__=="__main__":
-    sim = simulation(spacing=20)
+    sim = simulation(spacing=25)
     sim.openSimulation()
+
+    
