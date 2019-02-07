@@ -103,16 +103,3 @@ def AStarSearch(navPoints, behind, graph):
 			H = graph.heuristic(neighbour, end)
 			F[neighbour] = G[neighbour] + H
 
-# this needs adjusting kinda
-# if __name__=="__main__":
-# 	graph = AStarGraph()
-# 	result, cost = AStarSearch((0,0), (7,7), graph)
-# 	print ("route", result)
-# 	print ("cost", cost)
-# 	plt.plot([v[1] for v in result], [v[0] for v in result])
-# 	for obstacle in graph.obstacles:
-# 		plt.plot([v[1] for v in obstacle], [v[0] for v in obstacle])
-# 	plt.xlim(-1,8)
-# 	plt.ylim(-1,8)
-# 	plt.show()
-

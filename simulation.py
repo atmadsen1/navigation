@@ -4,7 +4,7 @@ import nodeSmooth as ns
 from tkinter import *
 
 class simulation:
-    #spacing and things are in pixels at the moment
+    #spacing and things are in centimeters (1 pixel = 1 centimeter) at the moment
     def __init__ (self, width=500, height=500, spacing=50):
         self.width            = width
         self.height           = height
@@ -129,7 +129,7 @@ class simulation:
         w = int(self.width/self.spacing)
         h = int(self.height/self.spacing)
         graph = alg.AStarGraph(obstacles=self.obstacleMap,width=w,height=h)
-        result, cost = alg.AStarSearch(self.navigationPoints,(0,0), graph)
+        result, cost = alg.AStarSearch(navPoints=self.navigationPoints, behind=(self.navigationPoints[0][0]+1,self.navigationPoints[0][1]), graph=graph)
         betResult = ns.smoothPath(rawPath=result)
         print ("route", result)
         print ("cost", cost)
@@ -145,7 +145,6 @@ class simulation:
 
 
 if __name__=="__main__":
-    sim = simulation(spacing=25)
+    sim = simulation(width=369,height=567,spacing=20) #Arena: 3.69m x 5.67m    Trough: 1.65m x 0.48m
     sim.openSimulation()
 
-    
