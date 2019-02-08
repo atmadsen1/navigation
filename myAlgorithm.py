@@ -21,7 +21,7 @@ class AStarGraph(object):
 		for dr, dc in [(1,0),(-1,0),(0,1),(0,-1),(1,1),(-1,1),(1,-1),(-1,-1)]:
 			r2 = pos[0] + dr
 			c2 = pos[1] + dc
-			if (c2 < 0 or c2 > self.width or r2 < 0 or r2 > self.height):	#if move is in-bounds
+			if (c2 < 0 or c2 > self.width-1 or r2 < 0 or r2 > self.height-1):	#if move is in-bounds
 				continue
 			n.append((r2, c2))
 		return n
@@ -97,7 +97,7 @@ def AStarSearch(navPoints, behind, graph):
 				continue #This G score is worse than previously found
  
 			#Adopt this G score
-
+			
 			cameFrom[neighbour] = current
 			G[neighbour] = candidateG
 			H = graph.heuristic(neighbour, end)

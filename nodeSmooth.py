@@ -1,9 +1,10 @@
 import math
 
 #Credit to Andrew Johnson for the parametric smoothing equation
-def smoothPath (rawPath,numPoints=0):
+def smoothPath (rawPath,factor,numPoints=0):
 	if (numPoints == 0):
-		numPoints = int(len(rawPath)/2)
+		numPoints = int(len(rawPath))
+	rawPath = tightenPath(path=rawPath,factor=factor)	#optional
 	betterPath = []
 	n = len(rawPath)-1
 	for tint in range(numPoints+1):	# 0 to 1
@@ -17,6 +18,22 @@ def smoothPath (rawPath,numPoints=0):
 			Bcol += base * rawPath[i][1]
 		betterPath.append((Brow,Bcol))
 	return betterPath
+
+#Used for creating a tighter bezier curve
+#Note this may not be needed and takes quite some computing power with
+#higher factors
+def tightenPath (path,factor=8):
+	if (factor<2):
+		return path
+	tighterPath = []
+	for i in range(len(path)-1):
+		dr = (path[i+1][0] - path[i][0])/factor
+		dc = (path[i+1][1] - path[i][1])/factor
+		for split in range(1,factor+1):
+			tempRow = path[i][0] + dr*split
+			tempCol = path[i][1] + dc*split
+			tighterPath.append((tempRow,tempCol))
+	return tighterPath
 
 #This needs to be inserted into the robot class that contains the location/orientation data
 #This uses the smoothed path obtained from running myAlgorithm with nodeSmooth

@@ -31,7 +31,7 @@ def drive (pathNodes, positionData, targetNode, closeEnough):
 
 if __name__=="__main__":
 	path = [(2, 2), (3, 3)]
-	posData = [2,2,0]
+	posData = [2,2,270]
 	targetNode = 1
 	closeEnuf = 0.4
 	testNode, testAngle = drive(path, posData, targetNode, closeEnuf)
